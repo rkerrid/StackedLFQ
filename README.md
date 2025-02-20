@@ -61,13 +61,5 @@ For Double SILAC: --channels SILAC,L,KR,0:0;SILAC,H,KR,8.014199:10.008269
 
 Switch MBR off
 
-> **Note:** The filtering script contains a remove_contaminants() function that looks for a _cont suffix label on Protein.Groups, the report.tsv should be annotated in the following way or the function should be adjusted to filter out contaminants.
 
-## Label check requirements
-The label check module requires a thermo .raw file for the heavy spike-in aquired in DDA mode. After processing this file with MQ with requantify switched on, the resulting msms.txt and evidence.txt are used along with the .raw file to automate the label check and calculate labeling efficiency (still in progress).
-
-# Version
-1.0.0
-
-Notes: 1.0.0 is a stable realease including all core features for the pipeline and label check.
 
