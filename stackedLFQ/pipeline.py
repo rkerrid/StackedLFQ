@@ -79,7 +79,7 @@ class Pipeline:
         self.precursor_rollup = StackedLFQ(self.path, self.params, self.filtered_report)
         self.protein_groups = self.precursor_rollup.generate_protein_groups()
         
-        # self._format_and_save_protein_groups(self.protein_groups)
+        self._format_and_save_protein_groups(self.protein_groups)
      
         # self._generate_reports()
         return self.protein_groups
@@ -107,8 +107,8 @@ class Pipeline:
         df_p = _format_data(self.protein_groups, 'pulse')
         df_p.to_csv(os.path.join(self.path, 'protein_groups', 'pulse.csv'), sep=',')
         
-        df_r = _format_data(self.protein_groups, 'pulse_L_ratio')
-        df_r.to_csv(os.path.join(self.path, 'protein_groups', 'ratios.csv'), sep=',')
+        # df_r = _format_data(self.protein_groups, 'pulse_L_ratio')
+        # df_r.to_csv(os.path.join(self.path, 'protein_groups', 'ratios.csv'), sep=',')
         
     def _generate_reports(self):
         '''this function should call functions from the report module to plot data ralated to IDs, ratios, correlation etc. as well as log data about the run and version etc.'''        

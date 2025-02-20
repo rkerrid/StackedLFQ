@@ -25,7 +25,7 @@
      "single_channel_precursor_per_protein":2,
      "precursor_ratios_per_protein":1,
      "directLFQ_ions_per_protein":1,
-     "No_of_cores_dlfq":2
+     "No_of_cores_dlfq":8
      
     
 }
