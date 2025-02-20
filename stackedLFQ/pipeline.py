@@ -76,12 +76,12 @@ class Pipeline:
         self.contaminants.to_csv(os.path.join(self.path, 'preprocessing', 'contaminants.csv'), sep=',')
         self.filtered_report.to_csv(os.path.join(self.path, 'preprocessing', 'formatted_precursors.csv'), sep=',')
         
-        self.precursor_rollup = StackedLFQ(self.path, self.filtered_report)
+        self.precursor_rollup = StackedLFQ(self.path, self.params, self.filtered_report)
         self.protein_groups = self.precursor_rollup.generate_protein_groups()
         
-        self._format_and_save_protein_groups(self.protein_groups)
+        # self._format_and_save_protein_groups(self.protein_groups)
      
-        self._generate_reports()
+        # self._generate_reports()
         return self.protein_groups
 
     def _format_and_save_protein_groups(self, protein_groups):
