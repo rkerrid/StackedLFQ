@@ -16,7 +16,7 @@ setup(
         'fpdf',
         'pytest',
         'tqdm',
-        'dask',
+        'dask[dataframe]>=2022.10.0',
         'pandastable',       
         "directlfq @ git+https://github.com/MannLabs/directlfq.git",# specify the branch, tag, or commit
         
