@@ -14,9 +14,6 @@ from .utils import manage_directories
 from .report import precursor_report
 
 from silac_dia_tools.workflow.preprocessor import Preprocessor 
-from silac_dia_tools.workflow.dynamic_dia_sis import DynamicDiaSis
-from silac_dia_tools.workflow.dia_sis import DiaSis  
-from silac_dia_tools.workflow.dynamic_silac_dia import DynamicSilac
 from silac_dia_tools.workflow.stacked_lfq import StackedLFQ
 from silac_dia_tools.workflow.meta_data_entry import MetaDataEntry
 
