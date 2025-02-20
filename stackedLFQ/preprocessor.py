@@ -6,8 +6,6 @@ Created on Tue Sep  3 10:14:26 2024
 """
 
 import pandas as pd
-# import numpy as np
-# import operator
 import time 
 import operator
 from tqdm import tqdm
@@ -44,9 +42,11 @@ class Preprocessor:
       
         file_size_bytes = os.path.getsize(file_path)
         average_row_size_bytes = 1100  # This is an example; you'll need to adjust this based on your data
+        
         # Estimate the number of rows
         estimated_rows = file_size_bytes / average_row_size_bytes
         total_chunks = estimated_rows/self.chunk_size
+        
         # Use ProcessPoolExecutor for parallel processing
         with ProcessPoolExecutor() as executor:
             futures = []
@@ -102,8 +102,6 @@ class Preprocessor:
         df['filter_passed_L'] = df['filter_passed_L'].fillna(0)
         
         return df
-        
-        
     
     def subset_based_on_metadata(self, df):       
         filtered_df = df[df['Run'].isin(self.meta_data['Run'])]
