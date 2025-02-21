@@ -10,8 +10,9 @@ import numpy as np
 import time
 from tqdm import tqdm
 from icecream import ic
-from stackedLFQ.utils import manage_directories
+import warnings
 
+from stackedLFQ.utils import manage_directories
 from stackedLFQ.utils import dlfq_functions as dlfq
 
 
@@ -30,11 +31,8 @@ class StackedLFQ:
         precursor_ratios = self.calculate_precursor_ratios(self.filtered_report)
         
         protein_group_ratios = self.compute_protein_level_ratios(precursor_ratios)
-        # pd.set_option('display.max_columns', None)
-        # print(protein_group_ratios)
 
-        protein_intensities_dlfq = self.perform_lfq(precursor_ratios)
-        
+        protein_intensities_dlfq = self.perform_lfq(precursor_ratios)      
         
         self.protein_groups = self.merge_data(protein_group_ratios, protein_intensities_dlfq)
        
@@ -65,43 +63,7 @@ class StackedLFQ:
         
         df.loc[:, 'Lib.PG.Q.Value'] = 0
         
-        return df
-    
-    
-    # def compute_protein_level_ratios(self, df):
-    #     print('Rolling up to protein level')
-    #     runs = df['Run'].unique()
-    #     runs_list = []
-    
-    #     for run in tqdm(runs, desc='Computing protein level ratios for each run'):
-    #         run_df = df[df['Run'] == run]
-            
-    #         def combined_median(ratio, quantity_pulse, quantity_L):
-    #             ratio = ratio.dropna() # Remove NaNs before counting
-    #             number_of_precursors = len(ratio)
-    #             if number_of_precursors < 1:  
-    #                 # do the thing
-    #                 channel = self.single_channel_identifier(quantity_pulse, quantity_L)
-    #                 return channel
-    #             else:
-    #                 log2_ratio = np.log2(ratio)  # Log-transform the combined series
-    #                 return 2**np.median(log2_ratio)  # Return the median of the log-transformed values
-    
-    #         # Group by protein group and apply the custom aggregation
-    #         import warnings
-
-    #         with warnings.catch_warnings():
-    #             warnings.filterwarnings("ignore", category=DeprecationWarning, message="DataFrameGroupBy.apply operated on the grouping columns")
-    #             grouped_run = run_df.groupby(['protein_group']).apply(lambda x: pd.Series({
-    #                 'pulse_L_ratio': combined_median(x['precursor_quantity_pulse_L_ratio'], x['precursor_quantity_pulse'], x['precursor_quantity_L'])
-    #             })).reset_index()
-        
-    #         grouped_run['Run'] = run
-    #         runs_list.append(grouped_run)
-    
-    #     result = pd.concat(runs_list, ignore_index=True)
-    #     return result
-    
+        return df    
     
     def compute_protein_level_ratios(self, df):
         print('Rolling up to protein level')
@@ -136,7 +98,6 @@ class StackedLFQ:
                 })
             
             # Group by protein group and apply the processing function
-            import warnings
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=DeprecationWarning, 
                                       message="DataFrameGroupBy.apply operated on the grouping columns")
@@ -155,12 +116,12 @@ class StackedLFQ:
         is_valid = False
         
         L_count = quantity_L.notna().sum()
-        if L_count >= self.params["single_channel_precursor_per_protein"]:
+        if L_count >= self.params["light_precursor_per_protein"]:
             is_light = True
             is_valid = True
         
         pulse_count = quantity_pulse.notna().sum()
-        if pulse_count >= self.params["single_channel_precursor_per_protein"]:
+        if pulse_count >= self.params["pulse_precursor_per_protein"]:
             is_pulse = True
             is_valid = True
             
@@ -197,10 +158,9 @@ class StackedLFQ:
             return result
     
     def merge_data(self, protein_group_ratios, protein_intensities_dlfq):
-        print('ratios', protein_group_ratios.shape)
-        print('intnsities', protein_intensities_dlfq.shape)
+        
         protein_groups = pd.merge(protein_group_ratios, protein_intensities_dlfq,on=['protein_group','Run'], how='left')
-        # protein_groups = protein_groups.dropna(subset=['normalized_intensity'])
+        protein_groups = protein_groups.dropna(subset=['normalized_intensity'])
         
         protein_groups['L'] = 0.0
         protein_groups['pulse'] = 0.0
@@ -221,30 +181,30 @@ class StackedLFQ:
         
         # For pulse_L_ratio containing 'pulse'
         df.loc[df['pulse_L_ratio'].astype(str).str.contains('invalid'), 'conversion'] = 'invalid'
-
-        # df.loc[df['conversion'] == 'ratio', 'L'] = df['normalized_intensity'] / (df['pulse_L_ratio'] + 1)
-        # df.loc[df['conversion'] == 'ratio', 'pulse'] = df['normalized_intensity'] - df['L']
-        # df.loc[df['conversion'] == 'L', 'L'] = df['normalized_intensity']
         
-        # Make sure df['pulse_L_ratio'] is numeric where conversion == 'ratio'
-        df.loc[df['conversion'] == 'ratio', 'pulse_L_ratio'] = pd.to_numeric(
-            df.loc[df['conversion'] == 'ratio', 'pulse_L_ratio'], 
-            errors='coerce'
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            # Make sure df['pulse_L_ratio'] is numeric where conversion == 'ratio'
+            df.loc[df['conversion'] == 'ratio', 'pulse_L_ratio'] = pd.to_numeric(
+                df.loc[df['conversion'] == 'ratio', 'pulse_L_ratio'], 
+                errors='coerce'
+            )
         
-        mask = (df['conversion'] == 'ratio') & df['pulse_L_ratio'].notna()
-        df.loc[mask, 'L'] = df.loc[mask, 'normalized_intensity'] / (df.loc[mask, 'pulse_L_ratio'] + 1)
-        df.loc[mask, 'pulse'] = df.loc[mask, 'normalized_intensity'] - df.loc[mask, 'L']
+            mask = (df['conversion'] == 'ratio') & df['pulse_L_ratio'].notna()
+            df.loc[mask, 'L'] = df.loc[mask, 'normalized_intensity'] / (df.loc[mask, 'pulse_L_ratio'] + 1)
+            df.loc[mask, 'pulse'] = df.loc[mask, 'normalized_intensity'] - df.loc[mask, 'L']
+            
+            # Handle the 'L' case
+            df.loc[df['conversion'] == 'L', 'L'] = df.loc[df['conversion'] == 'L', 'normalized_intensity']
+            
+            # Handle the 'pulse' case
+            # df.loc[df['conversion'] == 'pulse', 'pulse'] = df.loc[df['conversion'] == 'pulse', 'normalized_intensity']
+            df.loc[df['conversion'] == 'pulse', 'pulse'] = (
+            df.loc[df['conversion'] == 'pulse', 'normalized_intensity']
+            .infer_objects(copy=False)
+            )
         
-        # Handle the 'L' case
-        df.loc[df['conversion'] == 'L', 'L'] = df.loc[df['conversion'] == 'L', 'normalized_intensity']
-        
-        # Handle the 'pulse' case
-        df.loc[df['conversion'] == 'pulse', 'pulse'] = df.loc[df['conversion'] == 'pulse', 'normalized_intensity']
-        
-
-        
-        df.replace(0, np.nan, inplace=True)
+            df.replace(0, np.nan, inplace=True)
         
         return df
     

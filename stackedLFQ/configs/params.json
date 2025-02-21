@@ -17,15 +17,17 @@
     
     "contaminant_string": "Cont_",
     
-     "pulse_channel": "H",
+    "pulse_channel": "H",
      
-     "path": "G:/My Drive/Data/main experiments/20250220 testing stackedLFQ with evoAstral 40SPD/",
-     "diann_version": "1.8.1",
-     "ratio_requirement": 1,     
-     "single_channel_precursor_per_protein":2,
-     "precursor_ratios_per_protein":1,
-     "directLFQ_ions_per_protein":1,
-     "No_of_cores_dlfq":8
+    "path": "G:/My Drive/Data/main experiments/20250220 testing stackedLFQ with evoAstral 40SPD/",
+    "diann_version": "1.8.1",
+       
+    "light_precursor_per_protein":2,
+    "pulse_precursor_per_protein":2,
+    "precursor_ratios_per_protein":2,
+    "directLFQ_ions_per_protein":3,
+     
+    "No_of_cores_dlfq":8
      
     
 }

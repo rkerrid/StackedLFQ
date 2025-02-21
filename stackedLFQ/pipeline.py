@@ -86,29 +86,34 @@ class Pipeline:
 
     def _format_and_save_protein_groups(self, protein_groups):
         ''' this function should format protein groups into csv files for light, pulse,and ratios'''
+
+        protein_groups[['protein_group', 'genes']] = protein_groups['protein_group'].str.split(':', expand=True)
         
         def _format_data(protein_groups, subset):
             df = protein_groups.copy(deep=True)
-            df = df[['Run','protein_group', f'{subset}']]
+            df = df[['Run','protein_group','genes', f'{subset}']]
             df = df.dropna()
             df = df.pivot_table(
-            index=['protein_group'], 
+            index=['protein_group', 'genes'], 
             columns ='Run',                                
             values = f'{subset}'                          
             ).reset_index()
             return df
         
         manage_directories.create_directory(self.path, 'protein_groups')
-        self.protein_groups.to_csv(os.path.join(self.path, 'protein_groups', 'protein_groups.csv'), sep=',')
+        protein_groups.to_csv(os.path.join(self.path, 'protein_groups', 'protein_groups.csv'), sep=',')
         
-        df_l = _format_data(self.protein_groups, 'L')
+        df_l = _format_data(protein_groups, 'L')
         df_l.to_csv(os.path.join(self.path, 'protein_groups', 'light.csv'), sep=',')
         
-        df_p = _format_data(self.protein_groups, 'pulse')
+        df_p = _format_data(protein_groups, 'pulse')
         df_p.to_csv(os.path.join(self.path, 'protein_groups', 'pulse.csv'), sep=',')
         
-        # df_r = _format_data(self.protein_groups, 'pulse_L_ratio')
-        # df_r.to_csv(os.path.join(self.path, 'protein_groups', 'ratios.csv'), sep=',')
+        # drop non-float (ie invalid, L, and pulse labels) values from ratios col before formatting
+        protein_groups = protein_groups[pd.to_numeric(protein_groups['pulse_L_ratio'], errors='coerce').notna()]
+        
+        df_r = _format_data(protein_groups, 'pulse_L_ratio')
+        df_r.to_csv(os.path.join(self.path, 'protein_groups', 'ratios.csv'), sep=',')
         
     def _generate_reports(self):
         '''this function should call functions from the report module to plot data ralated to IDs, ratios, correlation etc. as well as log data about the run and version etc.'''        

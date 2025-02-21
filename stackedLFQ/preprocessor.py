@@ -164,6 +164,7 @@ class Preprocessor:
                 'Label',
                 'filter_passed']
         
+        df['Protein.Group'] = df['Protein.Group'] + ':' + df['Genes']
         # drop all other cols
         df = df[cols]
         return df
