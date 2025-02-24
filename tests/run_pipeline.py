@@ -12,5 +12,7 @@ if __name__ == "__main__":
     pipeline = pipeline( metadata_file='meta.csv')
     
     # result = pipeline.make_metadata()  
-    result = pipeline.execute_pipeline()
+    # result = pipeline.execute_pipeline()
+    
+    pipeline._generate_reports()
 

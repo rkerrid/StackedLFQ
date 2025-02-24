@@ -13,6 +13,7 @@ import json
 
 from stackedLFQ.utils import manage_directories
 from stackedLFQ.reporting import precursor_report
+from stackedLFQ.reporting import protein_groups_report
 
 from stackedLFQ.preprocessor import Preprocessor 
 from stackedLFQ.stacked_lfq import StackedLFQ
@@ -119,6 +120,7 @@ class Pipeline:
         '''this function should call functions from the report module to plot data ralated to IDs, ratios, correlation etc. as well as log data about the run and version etc.'''        
         manage_directories.create_directory(self.path, 'reports')
         precursor_report.create_precursor_report(self.path)
+        protein_groups_report.protein_groups_report(self.path)
        
     def make_metadata(self):
        print("Searching report.tsv for unique runs for metadata, use pop up to enter metadata or copy and past selected runs to a spreadsheet and save as .csv file")
