@@ -22,7 +22,7 @@ Then with conda:
 
 1. **Create a new conda environment:**
    ```bash
-   conda create --name myenv python=3.8
+   conda create --name myenv python=3.9
    ```
    
 2. **Activate the conda environment:**

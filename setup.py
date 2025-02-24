@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='silac_dia_tools',
-    version='0.2.0',
+    name='stackedLFQ',
+    version='0.1',
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
