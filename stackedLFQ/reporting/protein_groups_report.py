@@ -228,12 +228,12 @@ def plot_correlation_matrices(light_df, pulse_df, meta_df, pdf=None):
     
     # Process light data
     if light_df is not None:
-        print("Creating Light intensity correlation matrix...")
+        # print("Creating Light intensity correlation matrix...")
         light_corr = create_corr_matrix(light_df, 'Light Intensity Correlation Matrix', samples)
     
     # Process pulse data
     if pulse_df is not None:
-        print("Creating Pulse intensity correlation matrix...")
+        # print("Creating Pulse intensity correlation matrix...")
         pulse_corr = create_corr_matrix(pulse_df, 'Pulse Intensity Correlation Matrix', samples)
     
     if pdf is None:
