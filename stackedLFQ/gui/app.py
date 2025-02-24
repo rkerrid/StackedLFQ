@@ -2,14 +2,61 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import json
 import os
-from page_one import PageOne
-from page_two import PageTwo
+import pandas as pd
+from stackedLFQ.gui.page_one import PageOne
+from stackedLFQ.gui.page_two import PageTwo
 
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("stacked LFQ")
         self.geometry("800x700")
+  
+        # try:
+        #     from PIL import Image, ImageTk
+            
+        #     # Absolute path to your JPG
+        #     icon_path = r"C:\phd projects\stacked_lfq\stackedLFQ\gui\assets\Boo2.jpg"
+            
+        #     # Open and convert to ICO format in memory
+        #     pil_img = Image.open(icon_path)
+            
+        #     # Setting window icon via wm_iconbitmap (alternative approach)
+        #     # First save as temporary .ico file
+        #     temp_ico = os.path.join(os.path.dirname(icon_path), "temp_icon.ico")
+        #     pil_img.save(temp_ico, format="ICO", sizes=[(32, 32)])
+            
+        #     # Set as window icon
+        #     self.wm_iconbitmap(temp_ico)
+            
+        # except Exception as e:
+        #     print(f"Could not load icon: {e}")
+        try:
+            from PIL import Image, ImageTk
+            import os
+            
+            # Get the directory where the current script is located
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            
+            # Construct the path to the image relative to the current script
+            icon_path = os.path.join(current_dir, "assets", "Boo3.jpg")
+            
+            # Open the image
+            pil_img = Image.open(icon_path)
+            
+            # Create a temporary ICO file with multiple sizes
+            temp_ico = os.path.join(current_dir, "assets", "temp_icon.ico")
+            
+            # Save with multiple sizes for better quality
+            pil_img.save(temp_ico, format="ICO", sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128)])
+            
+            # Set as window icon
+            self.wm_iconbitmap(temp_ico)
+            
+        except Exception as e:
+            print(f"Could not load icon: {e}")
+
+                
         
         # Root Grid Layout
         self.grid_rowconfigure(0, weight=1)
@@ -48,6 +95,7 @@ class App(tk.Tk):
                 }
             }
         }
+        self.meta_data = pd.DataFrame(columns=['Run', 'Sample'])
         
         # Frames
         self.container = tk.Frame(self)
@@ -108,6 +156,18 @@ class App(tk.Tk):
         
         if self.current_page == (len(self.pages) - 1):
             self.save_config()
+            try:
+                # Import your main processing module
+                from stackedLFQ.pipeline import Pipeline as pipeline
+                
+                path = self.config_data["folder_path"]
+                pipeline = pipeline(path = path,  metadata_file='meta.csv')
+               
+                pipeline.execute_pipeline()
+                
+                messagebox.showinfo("Success", "Analysis completed successfully!")
+            except Exception as e:
+                messagebox.showerror("Error", f"An error occurred during analysis: {str(e)}")
         else:
             if self.current_page < (len(self.pages) - 1):
                 self.show_frame(self.current_page + 1)
@@ -124,11 +184,32 @@ class App(tk.Tk):
                 if not overwrite:
                     return
                 
+            # Save config file
             with open(config_file, "w") as f:
                 json.dump(self.config_data, f, indent=4)
+                
+            # Save metadata
+            self.save_metadata()
+            
             messagebox.showinfo("Success", f"Config file saved to {config_file}")
         else:
-            messagebox.showwarning("Warning", "Your TSV file is not located in an accessable folder!")
+            messagebox.showwarning("Warning", "Your TSV file is not located in an accessible folder!")
+
+    def save_metadata(self):
+        if self.config_data["folder_path"]:
+            # Save to CSV
+            metadata_file = os.path.join(self.config_data["folder_path"], "meta.csv")
+            if os.path.exists(metadata_file):
+                overwrite = messagebox.askyesno("File Exists", 
+                    f"The file '{metadata_file}' already exists. Do you want to overwrite it?")
+                if not overwrite:
+                    return
+                    
+            # Save the metadata DataFrame directly
+            self.meta_data.to_csv(metadata_file, index=False)
+            messagebox.showinfo("Success", f"Metadata saved to {metadata_file}")
+        else:
+            messagebox.showwarning("Warning", "Please select a valid folder first!")
             
             
 if __name__ == "__main__":

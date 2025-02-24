@@ -122,13 +122,17 @@ class PageOne(tk.Frame):
     def load_unique_runs(self):
         try:
             df = pd.read_csv(self.controller.config_data["file_path"], sep="\t", usecols=["Run"])
-            self.controller.config_data["unique_runs"] = sorted(df["Run"].dropna().unique())
-    
+            runs = sorted(df["Run"].dropna().unique())
+            self.controller.meta_data["Run"] = runs
+            self.controller.meta_data["Sample"] = runs
+            
             self.text_widget.delete("1.0", tk.END)
-            for run in self.controller.config_data["unique_runs"]:
+            for run in self.controller.meta_data["Run"]:
                 self.text_widget.insert(tk.END, run + "\n")
     
-            self.label_unique_runs.config(text=f"Unique Runs Loaded: {len(self.controller.config_data['unique_runs'])}")
+            self.label_unique_runs.config(text=f"Unique Runs Loaded: [need to add len")
+            
+            #dont save to json but save to meta.csv
     
         except ValueError:
             messagebox.showerror("Error", "Selected file does not contain a 'Run' column.")
@@ -158,25 +162,28 @@ class PageOne(tk.Frame):
         self.selection_label.config(text=f"MassSpec: {selected_massspec} | Selected DIANN: {selected_diann} | Starting Channel: {selected_silac_starting_channel} | Pulse Channel: {selected_silac_pulse_channel}")
     
     def preview_changes(self):
-        if not self.controller.config_data["unique_runs"]:
+        if self.controller.meta_data.empty:
             messagebox.showwarning("Warning", "No Runs loaded!")
             return
         pattern_start = self.remove_pattern_start_entry.get().strip()
         pattern_end = self.remove_pattern_end_entry.get().strip()
 
-        df_runs = pd.DataFrame(self.controller.config_data["unique_runs"], columns=["Run"])
-
+        df_runs = self.controller.meta_data
+        
         if pattern_start:
-            df_runs["Run"] = df_runs["Run"].str.replace(pattern_start, "", regex=True)
-
+            df_runs["Sample"] = df_runs["Sample"].str.replace(pattern_start, "", regex=True)
+            
+            
         if pattern_end:
-            df_runs["Run"] = df_runs["Run"].str.replace(pattern_end, "", regex=True)
-
+            df_runs["Sample"] = df_runs["Sample"].str.replace(pattern_end, "", regex=True)
+ 
         self.text_widget.delete("1.0", tk.END)
-        for run in df_runs["Run"]:
+        for run in df_runs["Sample"].values.tolist():
             self.text_widget.insert(tk.END, run + "\n")
         messagebox.showinfo("Preview", "Run names updated in preview! (Not applied yet)")
-
+     
+        self.controller.meta_data = df_runs
+     
     def update_config(self, *args):
         self.controller.config_data["removing_pattern_start"] = self.remove_pattern_start_var.get().strip()
         self.controller.config_data["removing_pattern_end"] = self.remove_pattern_end_var.get().strip()

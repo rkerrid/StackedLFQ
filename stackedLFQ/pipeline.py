@@ -23,27 +23,24 @@ from stackedLFQ.meta_data_entry import MetaDataEntry
 class Pipeline:
     def __init__(self, path=None, metadata_file=None): # check method input is valid otherwise print method options
         #load params
-        self.params = self._load_params()
-        
-        # Assign constructor variables
-        if path == None:
-            self.path = self.params["path"]
-        else:
-            self.path = path
-            
-        self.metadata_file = metadata_file
+        self.path = f'{path}/'
+        self.params = self._load_params(self.path)
+                    
+        self.metadata_file = f'{self.path}meta.csv'
         
         # Initialize class variables
-        self.relable_with_meta = self._confirm_metadata()
-        self.meta_data = self._load_meta_data() if self.relable_with_meta else None
+        # self.relable_with_meta = self._confirm_metadata()
+        self.meta_data = self._load_meta_data() #if self.relable_with_meta else None
        
         # Placeholder variables 
         self.filtered_report = None
         self.contaminants = None
         self.protein_groups = None
         
-    def _load_params(self):
-        json_path = os.path.join(os.path.dirname(__file__), 'configs', 'params.json')
+    def _load_params(self, path):
+        # json_path = os.path.join(os.path.dirname(__file__), 'configs', 'params.json')
+        json_path = f'{path}/params.json'
+        print(json_path)
         with open(json_path, 'r') as file:
             return json.load(file)
 
@@ -82,7 +79,7 @@ class Pipeline:
         
         self._format_and_save_protein_groups(self.protein_groups)
      
-        # self._generate_reports()
+        self._generate_reports()
         return self.protein_groups
 
     def _format_and_save_protein_groups(self, protein_groups):

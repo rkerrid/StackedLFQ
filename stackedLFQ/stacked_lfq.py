@@ -14,6 +14,7 @@ import warnings
 
 from stackedLFQ.utils import manage_directories
 from stackedLFQ.utils import dlfq_functions as dlfq
+import os
 
 
 class StackedLFQ:    
@@ -27,7 +28,7 @@ class StackedLFQ:
     def generate_protein_groups(self):  
         start_time = time.time()        
         self.filtered_report = self.filter_data(self.filtered_report)
-        
+        self.filtered_report.to_csv(os.path.join(self.path, 'preprocessing', 'precursors.csv'), sep=',')
         precursor_ratios = self.calculate_precursor_ratios(self.filtered_report)
         
         protein_group_ratios = self.compute_protein_level_ratios(precursor_ratios)
@@ -116,7 +117,7 @@ class StackedLFQ:
         is_valid = False
         
         L_count = quantity_L.notna().sum()
-        if L_count >= self.params["light_precursor_per_protein"]:
+        if L_count >= self.params["start_precursor_per_protein"]:
             is_light = True
             is_valid = True
         

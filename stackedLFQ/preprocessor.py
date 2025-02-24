@@ -20,7 +20,7 @@ class Preprocessor:
         self.params = params
         self.meta_data = meta_data
         self.chunk_size = 1000000  # Adjusted chunk size for better performance
-        self.pulse_channel = self.params["pulse_channel"]
+        self.pulse_channel = self.params["silac_pulse_channel"]
         
     def preprocess(self):
         filtered_report, contaminants_df = self.import_report()
@@ -80,7 +80,7 @@ class Preprocessor:
         
         chunk = self.drop_cols(chunk)
      
-        chunk, contam_chunk = self.remove_contaminants(chunk, self.params["contaminant_string"])
+        chunk, contam_chunk = self.remove_contaminants(chunk, self.params["contaminant_pattern"])
         
         return chunk, contam_chunk
     
