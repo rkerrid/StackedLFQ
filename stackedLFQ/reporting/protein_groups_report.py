@@ -7,6 +7,7 @@ Created on Mon Jun  3 10:15:43 2024
 
 
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.backends.backend_pdf import PdfPages
@@ -173,7 +174,73 @@ def plot_sample_intensities(light_df, pulse_df, meta_df, max_samples_per_plot=45
         plt.close(fig)
     else:
         plt.show()
+
+def plot_correlation_matrices(light_df, pulse_df, meta_df, pdf=None):
+    # Get samples from metadata
+    samples = meta_df['Sample'].unique()
+    
+    # Function to create and plot correlation matrix for a dataframe
+    def create_corr_matrix(df, title, samples):
+        # Initialize a DataFrame to store sample intensities
+        intensity_data = {}
         
+        # Extract and sum intensities for each sample
+        for sample in samples:
+            sample_cols = [col for col in df.columns if col.startswith(sample)]
+            if sample_cols:
+                # Sum intensities for this sample across all proteins
+                intensity_data[sample] = df[sample_cols].sum(axis=1)
+        
+        # Create correlation DataFrame
+        intensity_df = pd.DataFrame(intensity_data)
+        
+        # Calculate correlation matrix
+        corr_matrix = intensity_df.corr(method='pearson')
+        
+        # Create the plot
+        plt.figure(figsize=(12, 10))
+        mask = np.triu(np.ones_like(corr_matrix, dtype=bool))  # Create mask for upper triangle
+        
+        # Plot heatmap
+        ax = sns.heatmap(
+            corr_matrix, 
+            mask=mask,
+            vmin=0, vmax=1, 
+            annot=True,  # Show correlation values
+            cmap='YlGnBu',
+            square=True,
+            linewidths=.5
+        )
+        
+        plt.title(title, fontsize=16)
+        plt.tight_layout()
+        
+        # Save or show the plot
+        if pdf:
+            pdf.savefig(plt.gcf(), bbox_inches='tight')
+            plt.close()
+        
+        return corr_matrix
+    
+    # Create correlation matrices for light and pulse data
+    light_corr = None
+    pulse_corr = None
+    
+    # Process light data
+    if light_df is not None:
+        print("Creating Light intensity correlation matrix...")
+        light_corr = create_corr_matrix(light_df, 'Light Intensity Correlation Matrix', samples)
+    
+    # Process pulse data
+    if pulse_df is not None:
+        print("Creating Pulse intensity correlation matrix...")
+        pulse_corr = create_corr_matrix(pulse_df, 'Pulse Intensity Correlation Matrix', samples)
+    
+    if pdf is None:
+        plt.show()
+    
+    return light_corr, pulse_corr
+
 def protein_groups_report(path):
     output_path = f'{path}/reports/'
     # Read your data files
@@ -188,3 +255,4 @@ def protein_groups_report(path):
         # Create the plot
         plot_sample_counts(light_df, pulse_df, ratios_df, meta_df, max_samples_per_plot=6, pdf=pdf)
         plot_sample_intensities(light_df, pulse_df, meta_df, max_samples_per_plot=6, pdf=pdf)
+        plot_correlation_matrices(light_df, pulse_df, meta_df, pdf=pdf)
