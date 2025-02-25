@@ -16,6 +16,7 @@ from stackedLFQ.reporting import precursor_report
 from stackedLFQ.reporting import protein_groups_report
 
 from stackedLFQ.preprocessor import Preprocessor 
+from stackedLFQ.preprocessor_diann_2 import Preprocessor_2
 from stackedLFQ.stacked_lfq import StackedLFQ
 from stackedLFQ.meta_data_entry import MetaDataEntry
 
@@ -68,9 +69,9 @@ class Pipeline:
     def execute_pipeline(self, generate_report=True):
         manage_directories.create_directory(self.path, 'preprocessing')
         
-        self.preprocessor = Preprocessor(self.path, self.params, self.meta_data)
+        self.preprocessor = Preprocessor_2(self.path, self.params, self.meta_data)
         self.filtered_report, self.contaminants = self.preprocessor.preprocess()
-        
+       
         self.contaminants.to_csv(os.path.join(self.path, 'preprocessing', 'contaminants.csv'), sep=',')
         self.filtered_report.to_csv(os.path.join(self.path, 'preprocessing', 'formatted_precursors.csv'), sep=',')
         

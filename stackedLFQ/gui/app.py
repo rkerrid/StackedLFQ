@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import json
 import os
+import copy
 import pandas as pd
 from stackedLFQ.gui.page_one import PageOne
 from stackedLFQ.gui.page_two import PageTwo
@@ -56,10 +57,12 @@ class App(tk.Tk):
             "diann_version": "1.8.1",
             "silac_starting_channel": "L",
             "silac_pulse_channel": "H",
+
             "start_precursor_per_protein": 2,
             "pulse_precursor_per_protein": 2,
             "precursor_ratios_per_protein": 2,
             "directLFQ_ions_per_protein": 2,
+            
             "No_of_cores_dlfq": 8,
             "filters": {
                 "Global.PG.Q.Value": {
@@ -157,21 +160,55 @@ class App(tk.Tk):
         if self.current_page > 0:
             self.show_frame(self.current_page - 1)
             
+    # def save_config(self):
+    #     if self.config_data["folder_path"]:
+    #         config_file = os.path.join(self.config_data["folder_path"], "params.json")
+    #         if os.path.exists(config_file):
+    #             overwrite = messagebox.askyesno("File Exists", f"The file '{config_file}' already exists. Do you want to overwrite it?")
+    #             if not overwrite:
+    #                 return
+                
+    #         # Save config file
+    #         with open(config_file, "w") as f:
+    #             json.dump(self.config_data, f, indent=4)
+                
+    #         # Save metadata
+    #         self.save_metadata()
+            
+    #         messagebox.showinfo("Success", f"Config file saved to {config_file}")
+    #     else:
+    #         messagebox.showwarning("Warning", "Your TSV file is not located in an accessible folder!")
+    
     def save_config(self):
         if self.config_data["folder_path"]:
+            # Create a copy of config_data to modify
+            config_to_save = copy.deepcopy(self.config_data)
+            
+            # List of keys that should be integers
+            int_keys = [
+                "start_precursor_per_protein",
+                "pulse_precursor_per_protein", 
+                "precursor_ratios_per_protein",
+                "directLFQ_ions_per_protein",
+                "No_of_cores_dlfq"
+            ]
+            
+            # Convert float values to integers
+            for key in int_keys:
+                if key in config_to_save:
+                    config_to_save[key] = int(float(config_to_save[key]))
+            
+            # Save the modified config
             config_file = os.path.join(self.config_data["folder_path"], "params.json")
             if os.path.exists(config_file):
-                overwrite = messagebox.askyesno("File Exists", f"The file '{config_file}' already exists. Do you want to overwrite it?")
+                overwrite = messagebox.askyesno("File Exists", 
+                    f"The file '{config_file}' already exists. Do you want to overwrite it?")
                 if not overwrite:
                     return
-                
-            # Save config file
+                    
             with open(config_file, "w") as f:
-                json.dump(self.config_data, f, indent=4)
+                json.dump(config_to_save, f, indent=4)
                 
-            # Save metadata
-            self.save_metadata()
-            
             messagebox.showinfo("Success", f"Config file saved to {config_file}")
         else:
             messagebox.showwarning("Warning", "Your TSV file is not located in an accessible folder!")

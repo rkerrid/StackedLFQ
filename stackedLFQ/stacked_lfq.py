@@ -55,12 +55,12 @@ class StackedLFQ:
         df.loc[:, 'Precursor.Quantity'] = df['precursor_quantity_L'].fillna(0) + df['precursor_quantity_pulse'].fillna(0)
         
         df.loc[:, 'precursor_quantity_pulse_L_ratio'] = df['precursor_quantity_pulse'] / df['precursor_quantity_L'] 
-        df.loc[:, 'precursor_translated_pulse_L_ratio'] = df['precursor_translated_pulse'] / df['precursor_translated_L'] 
-        df.loc[:, 'ms1_translated_pulse_L_ratio'] = df['ms1_translated_pulse'] / df['ms1_translated_L']
+        # df.loc[:, 'precursor_translated_pulse_L_ratio'] = df['precursor_translated_pulse'] / df['precursor_translated_L'] 
+        # df.loc[:, 'ms1_translated_pulse_L_ratio'] = df['ms1_translated_pulse'] / df['ms1_translated_L']
         
         df.loc[:, 'precursor_quantity_pulse_L_ratio'] = df['precursor_quantity_pulse_L_ratio'].replace([np.inf, 0], np.nan)
-        df.loc[:, 'precursor_translated_pulse_L_ratio'] = df['precursor_translated_pulse_L_ratio'].replace([np.inf, 0], np.nan)
-        df.loc[:, 'ms1_translated_pulse_L_ratio'] = df['ms1_translated_pulse_L_ratio'].replace([np.inf, 0], np.nan)
+        # df.loc[:, 'precursor_translated_pulse_L_ratio'] = df['precursor_translated_pulse_L_ratio'].replace([np.inf, 0], np.nan)
+        # df.loc[:, 'ms1_translated_pulse_L_ratio'] = df['ms1_translated_pulse_L_ratio'].replace([np.inf, 0], np.nan)
         
         df.loc[:, 'Lib.PG.Q.Value'] = 0
         
@@ -78,7 +78,7 @@ class StackedLFQ:
             def combined_median(ratio, quantity_pulse, quantity_L):
                 ratio = ratio.dropna()  # Remove NaNs before counting
                 number_of_precursors = len(ratio)
-                if number_of_precursors < self.params["precursor_ratios_per_protein"]:  
+                if number_of_precursors < int(self.params["precursor_ratios_per_protein"]):  
                     # do the thing
                     channel, number_of_precursors = self.single_channel_identifier(quantity_pulse, quantity_L)
                     return (channel, number_of_precursors)  # Return tuple with value and count
@@ -117,12 +117,12 @@ class StackedLFQ:
         is_valid = False
         
         L_count = quantity_L.notna().sum()
-        if L_count >= self.params["start_precursor_per_protein"]:
+        if L_count >= int(self.params["start_precursor_per_protein"]):
             is_light = True
             is_valid = True
         
         pulse_count = quantity_pulse.notna().sum()
-        if pulse_count >= self.params["pulse_precursor_per_protein"]:
+        if pulse_count >= int(self.params["pulse_precursor_per_protein"]):
             is_pulse = True
             is_valid = True
             
@@ -146,7 +146,7 @@ class StackedLFQ:
             df.to_csv(f'{path}dflq_formatted_report.tsv', sep='\t')
             dlfq_output_file = f'{path}dlfq_protein_intensities.tsv'
             
-            dlfq.run_lfq(f'{path}dflq_formatted_report.tsv', file=dlfq_output_file,min_nonan = self.params["directLFQ_ions_per_protein"], num_cores=self.params["No_of_cores_dlfq"])
+            dlfq.run_lfq(f'{path}dflq_formatted_report.tsv', file=dlfq_output_file,min_nonan = int(self.params["directLFQ_ions_per_protein"]), num_cores=int(self.params["No_of_cores_dlfq"]))
             dlfq_df = pd.read_csv(dlfq_output_file, sep='\t')
            
             # Drop the 'Unnamed: 0' column

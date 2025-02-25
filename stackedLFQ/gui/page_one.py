@@ -120,43 +120,142 @@ class PageOne(tk.Frame):
             self.output_location_entry.delete(0, tk.END)
             self.output_location_entry.insert(0, folder_path)
             self.controller.config_data["folder_path"] = folder_path
-            
+    
     def load_unique_runs(self):
-        # if file path ends with .tsv, import tsv
-        #elif file path ends with parquet, import parquet
         print('Beginning import of Run file names')
         start_time = time.time()
+        file_path = self.controller.config_data["file_path"]
         
         try:
-            # df = pd.read_csv(self.controller.config_data["file_path"], sep="\t", usecols=["Run"])
-            #####
-            df = dd.read_csv(
-            self.controller.config_data["file_path"], 
-            sep='\t',
-            usecols=['Run'],
-            dtype={'Run': 'str'}  # Only specify dtype for the column you're loading
-            )
-            ####
-            runs = sorted(df["Run"].dropna().unique())
+            # Get file size in MB
+            file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+            print(f"File size: {file_size_mb:.2f} MB")
+            
+            # For extremely large files, use a more memory-efficient approach
+            if file_path.lower().endswith('.tsv') and file_size_mb > 1000:  # If over 1GB
+                print("Large TSV file detected. Using memory-efficient method...")
+                # Use Python's built-in file handling for minimal memory usage
+                unique_runs = set()
+                
+                # Open file and process line by line
+                with open(file_path, 'r') as file:
+                    # Get header line and find Run column index
+                    header = file.readline().strip().split('\t')
+                    try:
+                        run_index = header.index('Run')
+                    except ValueError:
+                        raise KeyError("Selected file does not contain a 'Run' column.")
+                    
+                    # Process rest of file line by line
+                    for i, line in enumerate(file):
+                        if i % 100000 == 0:  # Progress update
+                            print(f"Processed {i} lines...")
+                        
+                        try:
+                            columns = line.strip().split('\t')
+                            if len(columns) > run_index and columns[run_index]:
+                                unique_runs.add(columns[run_index])
+                        except Exception:
+                            # Skip problematic lines
+                            continue
+                
+                runs = sorted(unique_runs)
+                
+            elif file_path.lower().endswith('.tsv'):
+                # Regular TSV implementation for smaller files
+                df = dd.read_csv(
+                    file_path, 
+                    sep='\t',
+                    usecols=['Run'],
+                    dtype={'Run': 'str'},
+                    blocksize="50MB"  # Explicitly set smaller block size
+                )
+                runs = sorted(df["Run"].dropna().unique().compute())
+                
+            elif file_path.lower().endswith('.parquet'):
+                # Parquet files are generally more efficient
+                df = dd.read_parquet(
+                    file_path,
+                    columns=['Run']
+                )
+                runs = sorted(df["Run"].dropna().unique().compute())
+                
+            else:
+                raise ValueError("Unsupported file type. File must end with .tsv or .parquet")
+            
+            # Update metadata and UI
             self.controller.meta_data["Run"] = runs
             self.controller.meta_data["Sample"] = runs
             
+            # Update UI
             self.text_widget.delete("1.0", tk.END)
-            for run in self.controller.meta_data["Run"]:
+            for run in runs:
                 self.text_widget.insert(tk.END, run + "\n")
     
-            self.label_unique_runs.config(text=f"Unique Runs Loaded: [need to add len")
-            
-            #dont save to json but save to meta.csv
+            self.label_unique_runs.config(text=f"Unique Runs Loaded: {len(runs)}")
             
             print('Finished import')
             end_time = time.time()
             print(f"Time taken for import: {end_time - start_time} seconds")
             
-        except ValueError:
-            messagebox.showerror("Error", "Selected file does not contain a 'Run' column.")
+        except ValueError as ve:
+            messagebox.showerror("Error", str(ve))
+        except KeyError as ke:
+            messagebox.showerror("Error", str(ke))
+        except MemoryError:
+            messagebox.showerror("Error", "Not enough memory to process this file. Try converting it to parquet format first.")
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
+        
+        
+    # def load_unique_runs(self):
+    #     print('Beginning import of Run file names')
+    #     start_time = time.time()
+    #     file_path = self.controller.config_data["file_path"]
+        
+    #     try:
+    #         # Check file extension to determine import method
+    #         if file_path.lower().endswith('.tsv'):
+    #             # Use current TSV implementation
+    #             df = dd.read_csv(
+    #                 file_path, 
+    #                 sep='\t',
+    #                 usecols=['Run'],
+    #                 dtype={'Run': 'str'}
+    #             )
+    #         elif file_path.lower().endswith('.parquet'):
+    #             # Import from Parquet
+    #             # import dask.dataframe as dd
+    #             df = dd.read_parquet(
+    #                 file_path,
+    #                 columns=['Run']
+    #             )
+    #         else:
+    #             raise ValueError("Unsupported file type. File must end with .tsv or .parquet")
+            
+    #         # Get unique runs
+    #         runs = sorted(df["Run"].dropna().unique().compute())
+    #         self.controller.meta_data["Run"] = runs
+    #         self.controller.meta_data["Sample"] = runs
+            
+    #         # Update UI
+    #         self.text_widget.delete("1.0", tk.END)
+    #         for run in self.controller.meta_data["Run"]:
+    #             self.text_widget.insert(tk.END, run + "\n")
+    
+    #         self.label_unique_runs.config(text=f"Unique Runs Loaded: {len(runs)}")
+            
+    #         print('Finished import')
+    #         end_time = time.time()
+    #         print(f"Time taken for import: {end_time - start_time} seconds")
+            
+    #     except ValueError as ve:
+    #         messagebox.showerror("Error", str(ve))
+    #     except KeyError:
+    #         messagebox.showerror("Error", "Selected file does not contain a 'Run' column.")
+    #     except Exception as e:
+    #         messagebox.showerror("Error", f"An error occurred: {str(e)}")
+            
             
     def copy_selected_text(self, event=None):
         try:
