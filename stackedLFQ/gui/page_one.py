@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import pandas as pd
 import os
+import dask.dataframe as dd
+import time
 
 class PageOne(tk.Frame):
     def __init__(self, controller):
@@ -120,8 +122,21 @@ class PageOne(tk.Frame):
             self.controller.config_data["folder_path"] = folder_path
             
     def load_unique_runs(self):
+        # if file path ends with .tsv, import tsv
+        #elif file path ends with parquet, import parquet
+        print('Beginning import of Run file names')
+        start_time = time.time()
+        
         try:
-            df = pd.read_csv(self.controller.config_data["file_path"], sep="\t", usecols=["Run"])
+            # df = pd.read_csv(self.controller.config_data["file_path"], sep="\t", usecols=["Run"])
+            #####
+            df = dd.read_csv(
+            self.controller.config_data["file_path"], 
+            sep='\t',
+            usecols=['Run'],
+            dtype={'Run': 'str'}  # Only specify dtype for the column you're loading
+            )
+            ####
             runs = sorted(df["Run"].dropna().unique())
             self.controller.meta_data["Run"] = runs
             self.controller.meta_data["Sample"] = runs
@@ -133,7 +148,11 @@ class PageOne(tk.Frame):
             self.label_unique_runs.config(text=f"Unique Runs Loaded: [need to add len")
             
             #dont save to json but save to meta.csv
-    
+            
+            print('Finished import')
+            end_time = time.time()
+            print(f"Time taken for import: {end_time - start_time} seconds")
+            
         except ValueError:
             messagebox.showerror("Error", "Selected file does not contain a 'Run' column.")
         except Exception as e:

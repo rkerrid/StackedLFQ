@@ -12,25 +12,6 @@ class App(tk.Tk):
         self.title("stacked LFQ")
         self.geometry("800x700")
   
-        # try:
-        #     from PIL import Image, ImageTk
-            
-        #     # Absolute path to your JPG
-        #     icon_path = r"C:\phd projects\stacked_lfq\stackedLFQ\gui\assets\Boo2.jpg"
-            
-        #     # Open and convert to ICO format in memory
-        #     pil_img = Image.open(icon_path)
-            
-        #     # Setting window icon via wm_iconbitmap (alternative approach)
-        #     # First save as temporary .ico file
-        #     temp_ico = os.path.join(os.path.dirname(icon_path), "temp_icon.ico")
-        #     pil_img.save(temp_ico, format="ICO", sizes=[(32, 32)])
-            
-        #     # Set as window icon
-        #     self.wm_iconbitmap(temp_ico)
-            
-        # except Exception as e:
-        #     print(f"Could not load icon: {e}")
         try:
             from PIL import Image, ImageTk
             import os
@@ -78,7 +59,7 @@ class App(tk.Tk):
             "start_precursor_per_protein": 2,
             "pulse_precursor_per_protein": 2,
             "precursor_ratios_per_protein": 2,
-            "directLFQ_ions_per_protein": 3,
+            "directLFQ_ions_per_protein": 2,
             "No_of_cores_dlfq": 8,
             "filters": {
                 "Global.PG.Q.Value": {

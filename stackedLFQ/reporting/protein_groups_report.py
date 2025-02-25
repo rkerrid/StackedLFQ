@@ -14,7 +14,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 import os
 
 
-def plot_sample_counts(light_df, pulse_df, ratios_df, meta_df, max_samples_per_plot=45, pdf=None):
+def plot_sample_counts(light_df, pulse_df, ratios_df, meta_df, max_samples_per_plot=20, pdf=None):
     # Get samples from metadata
     samples = meta_df['Sample'].unique()
     
@@ -90,7 +90,7 @@ def plot_sample_counts(light_df, pulse_df, ratios_df, meta_df, max_samples_per_p
     else:
         plt.show()
 
-def plot_sample_intensities(light_df, pulse_df, meta_df, max_samples_per_plot=45, pdf=None):
+def plot_sample_intensities(light_df, pulse_df, meta_df, max_samples_per_plot=20, pdf=None):
     # Get samples from metadata
     samples = meta_df['Sample'].unique()
     
@@ -198,7 +198,7 @@ def plot_correlation_matrices(light_df, pulse_df, meta_df, pdf=None):
         corr_matrix = intensity_df.corr(method='pearson')
         
         # Create the plot
-        plt.figure(figsize=(12, 10))
+        plt.figure(figsize=(24, 20))
         mask = np.triu(np.ones_like(corr_matrix, dtype=bool))  # Create mask for upper triangle
         
         # Plot heatmap
@@ -253,6 +253,6 @@ def protein_groups_report(path):
         # Call the functions and pass the PDF object
         
         # Create the plot
-        plot_sample_counts(light_df, pulse_df, ratios_df, meta_df, max_samples_per_plot=6, pdf=pdf)
-        plot_sample_intensities(light_df, pulse_df, meta_df, max_samples_per_plot=6, pdf=pdf)
+        plot_sample_counts(light_df, pulse_df, ratios_df, meta_df,  pdf=pdf)
+        plot_sample_intensities(light_df, pulse_df, meta_df,  pdf=pdf)
         plot_correlation_matrices(light_df, pulse_df, meta_df, pdf=pdf)
