@@ -1,16 +1,14 @@
-
+# -*- coding: utf-8 -*-
 """
-Created on Tue Sep  3 10:14:26 2024
+Created on Tue Feb 25 05:35:15 2025
 
 @author: robbi
 """
-
 import pandas as pd
-import time 
+import time
+import os
 import operator
 from tqdm import tqdm
-import os
-from icecream import ic
 from concurrent.futures import ProcessPoolExecutor
 
 
@@ -23,21 +21,36 @@ class Preprocessor:
         self.pulse_channel = self.params["silac_pulse_channel"]
         
     def preprocess(self):
+        
+        print('Importing')
+        start_time = time.time()
         filtered_report, contaminants_df = self.import_report()
+        print('Finished import')
+        end_time = time.time()
+        print(f"Time taken for import: {end_time - start_time} seconds")
+        
         print('Reformating')
         start_time = time.time()
-        
         filtered_report = self.reformat_table(filtered_report, self.pulse_channel)
-        
         print('Finished reformating')
         end_time = time.time()
         print(f"Time taken for reformating: {end_time - start_time} seconds")
+        
         return filtered_report, contaminants_df
     
     def import_report(self):
-        print('Beginning import of report.tsv')
-        start_time = time.time()
         
+        if self.params["diann_version"] == "1.8.1":
+            print('importing DIANN 1.8.1 .tsv file')
+            return self._import_tsv_report()
+        
+        elif self.params["diann_version"] == "2":
+            return self._import_parquet_report()
+            
+        else:
+            raise ValueError("Unsupported file type: Supported types are 'tsv' and 'parquet', check directroy and DIANN report is correct.")
+    
+    def _import_tsv_report(self):
         file_path = f"{self.path}report.tsv"
       
         file_size_bytes = os.path.getsize(file_path)
@@ -62,12 +75,51 @@ class Preprocessor:
             filtered_report = pd.concat([res[0] for res in results], ignore_index=True)
             contaminants_df = pd.concat([res[1] for res in results], ignore_index=True)
     
-        print('Finished import')
-        end_time = time.time()
-        print(f"Time taken for import: {end_time - start_time} seconds")
         
-        return filtered_report, contaminants_df    
-
+        return filtered_report, contaminants_df
+    
+    def _import_parquet_report(self):
+        file_path = f"{self.path}report.parquet"
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"Parquet file not found: {file_path}")
+        
+        # Parquet files can be read directly without chunking, but for large files,
+        # we'll still process in chunks for consistency with the TSV approach
+        try:
+            # Read parquet file metadata to get number of row groups
+            parquet_file = pd.read_parquet(file_path, engine='pyarrow')
+            total_rows = len(parquet_file)
+            
+            # For very large files, we'll process in chunks
+            if total_rows > self.chunk_size:
+                total_chunks = (total_rows + self.chunk_size - 1) // self.chunk_size  # Ceiling division
+                
+                with ProcessPoolExecutor() as executor:
+                    futures = []
+                    with tqdm(total=total_chunks, desc="Processing parquet file in chunks") as pbar:
+                        for i in range(0, total_rows, self.chunk_size):
+                            chunk = parquet_file.iloc[i:i+self.chunk_size]
+                            futures.append(executor.submit(self.process_chunk, chunk))
+                            pbar.update(1)
+                        
+                    # Gather results from futures
+                    results = [f.result() for f in futures]
+                    
+                    # Concatenate chunks into final DataFrame
+                    filtered_report = pd.concat([res[0] for res in results], ignore_index=True)
+                    contaminants_df = pd.concat([res[1] for res in results], ignore_index=True)
+            else:
+                # For smaller files, process directly
+                filtered_report, contaminants_df = self.process_chunk(parquet_file)
+                
+        except Exception as e:
+            print(f"Error processing parquet file: {e}")
+            raise
+            
+        return filtered_report, contaminants_df
+    
     def process_chunk(self, chunk):
         # Process the chunk in parallel
         if self.meta_data is not None:
@@ -75,7 +127,7 @@ class Preprocessor:
             chunk = self.relabel_run(chunk)
         
         chunk = self.add_label_col(chunk)
-        
+  
         chunk = self.add_passes_filter_col(chunk, self.params)
         
         chunk = self.drop_cols(chunk)
@@ -84,17 +136,18 @@ class Preprocessor:
         
         return chunk, contam_chunk
     
+    
     def reformat_table(self, df, pulse_channel):
-        df = df.rename(columns={'Protein.Group':'protein_group','Genes':'genes', 'Precursor.Id': 'precursor_id'})
-        index_cols = ['Run', 'protein_group','genes', 'precursor_id']
+        df = df.rename(columns={'Protein.Group':'protein_group', 'Precursor.Id': 'precursor_id'})
+        index_cols = ['Run', 'protein_group','precursor_id']
                  
         df_light = df[df['Label']=='L']
         df_pulse = df[df['Label']==pulse_channel]
         df_light = df_light.drop(['Label'], axis=1)
         df_pulse = df_pulse.drop(['Label'], axis=1)
  
-        df_light = df_light.rename(columns={'Precursor.Quantity':'precursor_quantity_L','Precursor.Translated':'precursor_translated_L','Ms1.Translated':'ms1_translated_L','filter_passed':'filter_passed_L'})
-        df_pulse = df_pulse.rename(columns={'Precursor.Quantity':'precursor_quantity_pulse','Precursor.Translated':'precursor_translated_pulse','Ms1.Translated':'ms1_translated_pulse','filter_passed':'filter_passed_pulse'})
+        df_light = df_light.rename(columns={'Precursor.Quantity':'precursor_quantity_L','filter_passed':'filter_passed_L'})
+        df_pulse = df_pulse.rename(columns={'Precursor.Quantity':'precursor_quantity_pulse','filter_passed':'filter_passed_pulse'})
        
         df = pd.merge(df_light, df_pulse,on=index_cols, how='outer')
         
@@ -113,17 +166,21 @@ class Preprocessor:
         # Apply the mapping to df2['Run'] and raise an error if a 'Run' value doesn't exist in df1
         df['Run'] = df['Run'].map(run_to_sample)
         if df['Run'].isna().any():
-            raise ValueError("Some Run values in the report.tsv are not found in the metadata, please ensure metadata is correct.")
+            raise ValueError("Some Run values in the report are not found in the metadata, please ensure metadata is correct.")
             
         return df
 
     def add_label_col(self, df):
-        # Extract the label and add it as a new column
-        df['Label'] = df['Precursor.Id'].str.extract(r'\(SILAC-(K|R)-([HML])\)')[1]
+        if self.params["diann_version"] == "1.8.1":
+            # Extract the label and add it as a new column
+            df['Label'] = df['Precursor.Id'].str.extract(r'\(SILAC-(K|R)-([HML])\)')[1]
+            # Remove the '(SILAC-K|R-([HML]))' part from the 'Precursor.Id' string
+            df['Precursor.Id'] = df['Precursor.Id'].str.replace(r'\(SILAC-(K|R)-[HML]\)', '', regex=True)
+            
+        elif self.params["diann_version"] == "2":
+            df = df.rename(columns={'Channel': 'Label'})
+            df['Precursor.Id'] = df['Precursor.Id'].str.replace(r'\(SILAC\)', '', regex=True)
         
-        # Remove the '(SILAC-K|R-([HML]))' part from the 'Precursor.Id' string
-        df['Precursor.Id'] = df['Precursor.Id'].str.replace(r'\(SILAC-(K|R)-[HML]\)', '', regex=True)
-    
         return df
     
     def add_passes_filter_col(self, df, params):
@@ -140,6 +197,11 @@ class Preprocessor:
         
         for column, condition in self.params['filters'].items():
             op = ops[condition['op']]
+            
+            # Make sure the column exists in parquet file
+            if column not in df.columns:
+                print(f"Warning: Filter column '{column}' not found in the file. Skipping this filter.")
+                continue
             
             # Update the mask to keep chanel rows that meet the condition
             mask &= op(df[column], condition['value'])
@@ -159,16 +221,18 @@ class Preprocessor:
                 'Genes',
                 'Precursor.Id',
                 'Precursor.Quantity',
-                'Precursor.Translated',
-                'Ms1.Translated',
                 'Label',
                 'filter_passed']
+        
+        # Check if all required columns exist
+        missing_cols = [col for col in cols if col not in df.columns]
+        if missing_cols:
+            raise ValueError("Missing required columns in  file: {missing_cols}")
         
         df['Protein.Group'] = df['Protein.Group'] + ':' + df['Genes']
         # drop all other cols
         df = df[cols]
         return df
-
 
     def remove_contaminants(self, df, contam_annotation):
         #chunk_copy = chunk.copy(deep=True)
@@ -177,5 +241,3 @@ class Preprocessor:
         contams = df.loc[contams_mask].reset_index(drop=True)
    
         return df_filtered, contams
-    
-    

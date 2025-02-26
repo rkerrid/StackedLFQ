@@ -16,7 +16,6 @@ from stackedLFQ.reporting import precursor_report
 from stackedLFQ.reporting import protein_groups_report
 
 from stackedLFQ.preprocessor import Preprocessor 
-from stackedLFQ.preprocessor_diann_2 import Preprocessor_2
 from stackedLFQ.stacked_lfq import StackedLFQ
 from stackedLFQ.meta_data_entry import MetaDataEntry
 
@@ -43,7 +42,23 @@ class Pipeline:
         json_path = f'{path}/params.json'
         print(json_path)
         with open(json_path, 'r') as file:
-            return json.load(file)
+            params = json.load(file)
+            
+            # Print the types of all values in the JSON
+            def print_types(obj, path=''):
+                if isinstance(obj, dict):
+                    for key, value in obj.items():
+                        new_path = f"{path}.{key}" if path else key
+                        print(f"{new_path}: {type(value)}")
+                        print_types(value, new_path)
+                elif isinstance(obj, list):
+                    for i, item in enumerate(obj):
+                        new_path = f"{path}[{i}]"
+                        print(f"{new_path}: {type(item)}")
+                        print_types(item, new_path)
+            
+            print_types(params, f'{path}')
+            return params
 
     def _confirm_metadata(self):
         if self.metadata_file is None:
@@ -69,7 +84,7 @@ class Pipeline:
     def execute_pipeline(self, generate_report=True):
         manage_directories.create_directory(self.path, 'preprocessing')
         
-        self.preprocessor = Preprocessor_2(self.path, self.params, self.meta_data)
+        self.preprocessor = Preprocessor(self.path, self.params, self.meta_data)
         self.filtered_report, self.contaminants = self.preprocessor.preprocess()
        
         self.contaminants.to_csv(os.path.join(self.path, 'preprocessing', 'contaminants.csv'), sep=',')

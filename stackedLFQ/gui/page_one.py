@@ -4,6 +4,9 @@ import pandas as pd
 import os
 import dask.dataframe as dd
 import time
+from tqdm import tqdm
+from concurrent.futures import ProcessPoolExecutor
+
 
 class PageOne(tk.Frame):
     def __init__(self, controller):
@@ -120,7 +123,7 @@ class PageOne(tk.Frame):
             self.output_location_entry.delete(0, tk.END)
             self.output_location_entry.insert(0, folder_path)
             self.controller.config_data["folder_path"] = folder_path
-    
+            
     def load_unique_runs(self):
         print('Beginning import of Run file names')
         start_time = time.time()
@@ -128,58 +131,45 @@ class PageOne(tk.Frame):
         
         try:
             # Get file size in MB
-            file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+            file_size_bytes = os.path.getsize(file_path)
+            file_size_mb = file_size_bytes / (1024 * 1024)
             print(f"File size: {file_size_mb:.2f} MB")
             
-            # For extremely large files, use a more memory-efficient approach
-            if file_path.lower().endswith('.tsv') and file_size_mb > 1000:  # If over 1GB
-                print("Large TSV file detected. Using memory-efficient method...")
-                # Use Python's built-in file handling for minimal memory usage
+            # Set chunk size for processing
+            chunk_size = 100000  # Adjust based on your system's memory
+            
+            if file_path.lower().endswith('.tsv'):
+                # Estimate number of rows and chunks
+                average_row_size_bytes = 1000  # Adjust based on your data
+                estimated_rows = file_size_bytes / average_row_size_bytes
+                total_chunks = int(estimated_rows / chunk_size) + 1
+                
                 unique_runs = set()
                 
-                # Open file and process line by line
-                with open(file_path, 'r') as file:
-                    # Get header line and find Run column index
-                    header = file.readline().strip().split('\t')
-                    try:
-                        run_index = header.index('Run')
-                    except ValueError:
-                        raise KeyError("Selected file does not contain a 'Run' column.")
-                    
-                    # Process rest of file line by line
-                    for i, line in enumerate(file):
-                        if i % 100000 == 0:  # Progress update
-                            print(f"Processed {i} lines...")
-                        
-                        try:
-                            columns = line.strip().split('\t')
-                            if len(columns) > run_index and columns[run_index]:
-                                unique_runs.add(columns[run_index])
-                        except Exception:
-                            # Skip problematic lines
-                            continue
+                # Process the file in chunks with a progress bar
+                with tqdm(total=total_chunks, desc="Loading unique runs") as pbar:
+                    for chunk in pd.read_csv(file_path, sep='\t', usecols=['Run'], 
+                                            dtype={'Run': 'str'}, chunksize=chunk_size):
+                        # Add unique runs from this chunk
+                        unique_runs.update(chunk['Run'].dropna().unique())
+                        pbar.update(1)
                 
                 runs = sorted(unique_runs)
                 
-            elif file_path.lower().endswith('.tsv'):
-                # Regular TSV implementation for smaller files
-                df = dd.read_csv(
-                    file_path, 
-                    sep='\t',
-                    usecols=['Run'],
-                    dtype={'Run': 'str'},
-                    blocksize="50MB"  # Explicitly set smaller block size
-                )
-                runs = sorted(df["Run"].dropna().unique().compute())
-                
             elif file_path.lower().endswith('.parquet'):
-                # Parquet files are generally more efficient
-                df = dd.read_parquet(
-                    file_path,
-                    columns=['Run']
-                )
-                runs = sorted(df["Run"].dropna().unique().compute())
+                # For parquet files, we can be more efficient
+                df = dd.read_parquet(file_path, columns=['Run'])
                 
+                # Create a progress bar for computation
+                with tqdm(desc="Computing unique runs") as pbar:
+                    # Set up a callback to update the progress bar
+                    def update_bar(*args, **kwargs):
+                        pbar.update(1)
+                    
+                    # Compute unique runs with callback for progress
+                    runs = sorted(df["Run"].dropna().unique().compute(scheduler='processes', num_workers=4))
+                    pbar.update(1)  # Final update
+                    
             else:
                 raise ValueError("Unsupported file type. File must end with .tsv or .parquet")
             
@@ -206,8 +196,94 @@ class PageOne(tk.Frame):
             messagebox.showerror("Error", "Not enough memory to process this file. Try converting it to parquet format first.")
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
+    
+    # def load_unique_runs(self):
+    #     print('Beginning import of Run file names')
+    #     start_time = time.time()
+    #     file_path = self.controller.config_data["file_path"]
         
+    #     try:
+    #         # Get file size in MB
+    #         file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+    #         print(f"File size: {file_size_mb:.2f} MB")
+            
+    #         # For extremely large files, use a more memory-efficient approach
+    #         if file_path.lower().endswith('.tsv') and file_size_mb > 4000:  # If over 4GB
+    #             print("Large TSV file detected. Using memory-efficient method...")
+    #             # Use Python's built-in file handling for minimal memory usage
+    #             unique_runs = set()
+                
+    #             # Open file and process line by line
+    #             with open(file_path, 'r') as file:
+    #                 # Get header line and find Run column index
+    #                 header = file.readline().strip().split('\t')
+    #                 try:
+    #                     run_index = header.index('Run')
+    #                 except ValueError:
+    #                     raise KeyError("Selected file does not contain a 'Run' column.")
+                    
+    #                 # Process rest of file line by line
+    #                 for i, line in enumerate(file):
+    #                     if i % 100000 == 0:  # Progress update
+    #                         print(f"Processed {i} lines...")
+                        
+    #                     try:
+    #                         columns = line.strip().split('\t')
+    #                         if len(columns) > run_index and columns[run_index]:
+    #                             unique_runs.add(columns[run_index])
+    #                     except Exception:
+    #                         # Skip problematic lines
+    #                         continue
+                
+    #             runs = sorted(unique_runs)
+                
+    #         elif file_path.lower().endswith('.tsv'):
+    #             # Regular TSV implementation for smaller files
+    #             df = dd.read_csv(
+    #                 file_path, 
+    #                 sep='\t',
+    #                 usecols=['Run'],
+    #                 dtype={'Run': 'str'},
+    #                 blocksize="50MB"  # Explicitly set smaller block size
+    #             )
+    #             runs = sorted(df["Run"].dropna().unique().compute())
+                
+    #         elif file_path.lower().endswith('.parquet'):
+    #             # Parquet files are generally more efficient
+    #             df = dd.read_parquet(
+    #                 file_path,
+    #                 columns=['Run']
+    #             )
+    #             runs = sorted(df["Run"].dropna().unique().compute())
+                
+    #         else:
+    #             raise ValueError("Unsupported file type. File must end with .tsv or .parquet")
+            
+    #         # Update metadata and UI
+    #         self.controller.meta_data["Run"] = runs
+    #         self.controller.meta_data["Sample"] = runs
+            
+    #         # Update UI
+    #         self.text_widget.delete("1.0", tk.END)
+    #         for run in runs:
+    #             self.text_widget.insert(tk.END, run + "\n")
+    
+    #         self.label_unique_runs.config(text=f"Unique Runs Loaded: {len(runs)}")
+            
+    #         print('Finished import')
+    #         end_time = time.time()
+    #         print(f"Time taken for import: {end_time - start_time} seconds")
+            
+    #     except ValueError as ve:
+    #         messagebox.showerror("Error", str(ve))
+    #     except KeyError as ke:
+    #         messagebox.showerror("Error", str(ke))
+    #     except MemoryError:
+    #         messagebox.showerror("Error", "Not enough memory to process this file. Try converting it to parquet format first.")
+    #     except Exception as e:
+    #         messagebox.showerror("Error", f"An error occurred: {str(e)}")
         
+     # old function   
     # def load_unique_runs(self):
     #     print('Beginning import of Run file names')
     #     start_time = time.time()
