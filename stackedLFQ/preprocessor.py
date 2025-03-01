@@ -13,8 +13,9 @@ from concurrent.futures import ProcessPoolExecutor
 
 
 class Preprocessor:
-    def __init__(self, path, params, meta_data=None):
+    def __init__(self, path, import_file, params, meta_data=None):
         self.path = path
+        self.import_file = import_file
         self.params = params
         self.meta_data = meta_data
         self.chunk_size = 1000000  # Adjusted chunk size for better performance
@@ -37,18 +38,42 @@ class Preprocessor:
         print(f"Time taken for reformating: {end_time - start_time} seconds")
         
         return filtered_report, contaminants_df
-    
     def import_report(self):
+        """
+        Import report based on file extension and DIANN version
+        """
+        
+        # Get file extension
+        file_extension = os.path.splitext(self.import_file)[1].lower()
         
         if self.params["diann_version"] == "1.8.1":
-            print('importing DIANN 1.8.1 .tsv file')
-            return self._import_tsv_report()
+            print(f'Importing DIANN 1.8.1 file with {file_extension} extension')
+            if file_extension == '.tsv':
+                return self._import_tsv_report()
+            elif file_extension == '.parquet':
+                return self._import_parquet_report()
+            else:
+                raise ValueError(f"Unsupported file extension: {file_extension} for DIANN 1.8.1. Supported extensions are '.tsv' and '.parquet'")
         
         elif self.params["diann_version"] == "2":
+            if file_extension != '.parquet':
+                print(f"Warning: DIANN 2 typically uses parquet format, but found {file_extension}. Attempting to import anyway.")
             return self._import_parquet_report()
             
         else:
-            raise ValueError("Unsupported file type: Supported types are 'tsv' and 'parquet', check directroy and DIANN report is correct.")
+            raise ValueError("Unsupported DIANN version. Supported versions are '1.8.1' and '2'.")
+            
+    # def import_report(self):
+        
+    #     if self.params["diann_version"] == "1.8.1":
+    #         print('importing DIANN 1.8.1 .tsv file')
+    #         return self._import_tsv_report()
+        
+    #     elif self.params["diann_version"] == "2":
+    #         return self._import_parquet_report()
+            
+    #     else:
+    #         raise ValueError("Unsupported file type: Supported types are 'tsv' and 'parquet', check directroy and DIANN report is correct.")
     
     def _import_tsv_report(self):
         file_path = f"{self.path}report.tsv"
@@ -156,11 +181,15 @@ class Preprocessor:
         
         return df
     
-    def subset_based_on_metadata(self, df):       
+    def subset_based_on_metadata(self, df):   
+        df = df.copy()
+        
         filtered_df = df[df['Run'].isin(self.meta_data['Run'])]
         return filtered_df
     
     def relabel_run(self, df):
+        df = df.copy()
+        
         run_to_sample = dict(zip(self.meta_data['Run'], self.meta_data['Sample']))
     
         # Apply the mapping to df2['Run'] and raise an error if a 'Run' value doesn't exist in df1
@@ -171,6 +200,8 @@ class Preprocessor:
         return df
 
     def add_label_col(self, df):
+        df = df.copy()
+        
         if self.params["diann_version"] == "1.8.1":
             # Extract the label and add it as a new column
             df['Label'] = df['Precursor.Id'].str.extract(r'\(SILAC-(K|R)-([HML])\)')[1]
@@ -187,6 +218,8 @@ class Preprocessor:
         """
         DF annotated with pas or fail based on filtering criteria in the params file.
         """
+        df = df.copy()
+        
         ops = {
             "==": operator.eq, "<": operator.lt, "<=": operator.le,
             ">": operator.gt, ">=": operator.ge
@@ -215,6 +248,8 @@ class Preprocessor:
         return df
     
     def drop_cols(self, df):
+        df = df.copy()
+        
         # what cols to keep for future workflow
         cols = ['Run',
                 'Protein.Group',
@@ -235,7 +270,8 @@ class Preprocessor:
         return df
 
     def remove_contaminants(self, df, contam_annotation):
-        #chunk_copy = chunk.copy(deep=True)
+        df = df.copy()
+        
         contams_mask = df['Protein.Group'].str.contains(contam_annotation, case=False, na=False)
         df_filtered = df.loc[~contams_mask].reset_index(drop=True)
         contams = df.loc[contams_mask].reset_index(drop=True)

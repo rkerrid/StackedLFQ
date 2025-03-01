@@ -21,12 +21,13 @@ from stackedLFQ.meta_data_entry import MetaDataEntry
 
 
 class Pipeline:
-    def __init__(self, path=None, metadata_file=None): # check method input is valid otherwise print method options
+    def __init__(self, path=None, import_file=None, metadata_file='meta.csv'): # check method input is valid otherwise print method options
         #load params
         self.path = f'{path}/'
+        self.import_file = import_file
         self.params = self._load_params(self.path)
                     
-        self.metadata_file = f'{self.path}meta.csv'
+        self.metadata_file = metadata_file
         
         # Initialize class variables
         # self.relable_with_meta = self._confirm_metadata()
@@ -84,7 +85,7 @@ class Pipeline:
     def execute_pipeline(self, generate_report=True):
         manage_directories.create_directory(self.path, 'preprocessing')
         
-        self.preprocessor = Preprocessor(self.path, self.params, self.meta_data)
+        self.preprocessor = Preprocessor(self.path, self.import_file, self.params, self.meta_data)
         self.filtered_report, self.contaminants = self.preprocessor.preprocess()
        
         self.contaminants.to_csv(os.path.join(self.path, 'preprocessing', 'contaminants.csv'), sep=',')
