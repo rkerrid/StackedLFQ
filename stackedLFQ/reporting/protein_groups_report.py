@@ -14,7 +14,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 import os
 
 
-def plot_sample_counts(light_df, pulse_df, ratios_df, meta_df, max_samples_per_plot=20, pdf=None):
+def plot_sample_counts(light_df, pulse_df, ratios_df, meta_df, max_samples_per_plot=40, pdf=None):
     # Get samples from metadata
     samples = meta_df['Sample'].unique()
     
@@ -90,7 +90,7 @@ def plot_sample_counts(light_df, pulse_df, ratios_df, meta_df, max_samples_per_p
     else:
         plt.show()
 
-def plot_sample_intensities(light_df, pulse_df, meta_df, max_samples_per_plot=20, pdf=None):
+def plot_sample_intensities(light_df, pulse_df, meta_df, max_samples_per_plot=40, pdf=None):
     # Get samples from metadata
     samples = meta_df['Sample'].unique()
     

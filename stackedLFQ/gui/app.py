@@ -141,6 +141,7 @@ class App(tk.Tk):
         
         if self.current_page == (len(self.pages) - 1):
             self.save_config()
+            self.save_metadata()
             try:
                 # Import your main processing module
                 from stackedLFQ.pipeline import Pipeline as pipeline
@@ -162,24 +163,6 @@ class App(tk.Tk):
         if self.current_page > 0:
             self.show_frame(self.current_page - 1)
             
-    # def save_config(self):
-    #     if self.config_data["folder_path"]:
-    #         config_file = os.path.join(self.config_data["folder_path"], "params.json")
-    #         if os.path.exists(config_file):
-    #             overwrite = messagebox.askyesno("File Exists", f"The file '{config_file}' already exists. Do you want to overwrite it?")
-    #             if not overwrite:
-    #                 return
-                
-    #         # Save config file
-    #         with open(config_file, "w") as f:
-    #             json.dump(self.config_data, f, indent=4)
-                
-    #         # Save metadata
-    #         self.save_metadata()
-            
-    #         messagebox.showinfo("Success", f"Config file saved to {config_file}")
-    #     else:
-    #         messagebox.showwarning("Warning", "Your TSV file is not located in an accessible folder!")
     
     def save_config(self):
         if self.config_data["folder_path"]:

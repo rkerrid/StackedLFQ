@@ -28,7 +28,7 @@ def create_precursor_report(path):
         plot_id_counts(df, filtered=True, pdf=pdf)
 
 
-def plot_summed_intensity(df, max_samples_per_plot=20, filtered=False, pdf=None):
+def plot_summed_intensity(df, max_samples_per_plot=40, filtered=False, pdf=None):
    df_filtered = df
    metric = 'precursor_quantity'
    suffixes = ['_L', '_M', '_H', '_pulse']
@@ -109,7 +109,7 @@ def plot_summed_intensity(df, max_samples_per_plot=20, filtered=False, pdf=None)
 
 
 
-def plot_id_counts(df, max_samples_per_plot=20, filtered=False, pdf=None):
+def plot_id_counts(df, max_samples_per_plot=40, filtered=False, pdf=None):
     df_filtered = df
     metric = 'precursor_quantity'
     suffixes = ['_L', '_M', '_H', '_pulse']
