@@ -145,7 +145,8 @@ class App(tk.Tk):
                 from stackedLFQ.pipeline import Pipeline as pipeline
                 
                 path = self.config_data["folder_path"]
-                pipeline = pipeline(path = path,  metadata_file='meta.csv')
+                file_path = self.config_data["file_path"]
+                pipeline = pipeline(path = path, import_file=file_path, metadata_file='meta.csv')
                
                 pipeline.execute_pipeline()
                 

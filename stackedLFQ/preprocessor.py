@@ -42,7 +42,7 @@ class Preprocessor:
         """
         Import report based on file extension and DIANN version
         """
-        
+        print()
         # Get file extension
         file_extension = os.path.splitext(self.import_file)[1].lower()
         
