@@ -97,9 +97,9 @@ class PageTwo(tk.Frame):
     def update_config(self, *args):
         try:
             # Save float values for these parameters
-            self.controller.config_data["filters"]["Global.PG.Q.Value"] = float(self.global_pg_q_value_var.get().strip())
-            self.controller.config_data["filters"]["Channel.Q.Value"] = float(self.channel_q_value_var.get().strip())
-            self.controller.config_data["filters"]["Precursor.Charge"] = int(self.precursor_charge_var.get().strip())
+            self.controller.config_data["filters"]["Global.PG.Q.Value"]["value"] = float(self.global_pg_q_value_var.get().strip())
+            self.controller.config_data["filters"]["Channel.Q.Value"]["value"] = float(self.channel_q_value_var.get().strip())
+            self.controller.config_data["filters"]["Precursor.Charge"]["value"] = int(self.precursor_charge_var.get().strip())
             
             # Save integer values for these parameters
             self.controller.config_data["start_precursor_per_protein"] = int(float(self.precursor_starting_channel_var.get().strip()))

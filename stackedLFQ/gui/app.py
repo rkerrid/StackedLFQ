@@ -64,6 +64,7 @@ class App(tk.Tk):
             "directLFQ_ions_per_protein": 2,
             
             "No_of_cores_dlfq": 8,
+            
             "filters": {
                 "Global.PG.Q.Value": {
                     "op": "<",
