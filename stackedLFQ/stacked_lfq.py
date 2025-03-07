@@ -22,7 +22,7 @@ class StackedLFQ:
         self.path = path
         self.params = params
         self.filtered_report = filtered_report
-        
+        self.requantify = True
         self.protein_groups = None
     
     def generate_protein_groups(self):  
@@ -44,9 +44,18 @@ class StackedLFQ:
         return self.protein_groups
     
     def filter_data(self, df):
+        
         df['filter_passed_L'] = df['filter_passed_L'].astype(bool)
         df['filter_passed_pulse'] = df['filter_passed_pulse'].astype(bool)
-        return  df[(df['filter_passed_L']) | (df['filter_passed_pulse'])]
+       
+        if self.requantify:
+            # Set precursor_quantity_L to np.nan where filter_passed_L is False
+           df.loc[~df['filter_passed_L'], 'precursor_quantity_L'] = np.nan
+           # Set precursor_quantity_pulse to np.nan where filter_passed_pulse is False
+           df.loc[~df['filter_passed_pulse'], 'precursor_quantity_pulse'] = np.nan
+           return df
+        else:
+            return  df[(df['filter_passed_L']) | (df['filter_passed_pulse'])]
     
     def calculate_precursor_ratios(self, df):
         print('Calculating SILAC ratios')

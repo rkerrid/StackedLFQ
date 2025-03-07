@@ -9,20 +9,20 @@ if __name__ == "__main__":
      
 
 
-    # path = 'G:/My Drive/Data/main experiments/20250210 96 sample poc'
-    # import_file = 'G:/My Drive/Data/main experiments/20250210 96 sample poc/report.parquet'
+    path = 'G:/My Drive/Data/PhD results chapters/20250225 mariana organoids/400ng 2 precursor'
+    import_file = 'G:/My Drive/Data/PhD results chapters/20250225 mariana organoids/400ng 2 precursor/report.tsv'
    
     
-    # pipeline = pipeline( path=path, import_file=import_file, metadata_file='meta_remove_dropouts.csv')
+    pipeline = pipeline( path=path, import_file=import_file, metadata_file='meta_with_treatments_24h.csv')
 
     
     # result = pipeline.make_metadata()  
-    # result = pipeline.execute_pipeline()
+    result = pipeline.execute_pipeline()
     # 
     # pipeline._generate_reports()
 
 
   
     
-    app = App()
-    app.mainloop()
+    # app = App()
+    # app.mainloop()
