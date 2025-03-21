@@ -58,7 +58,7 @@ class App(tk.Tk):
             "diann_version": "1.8.1",
             "silac_starting_channel": "L",
             "silac_pulse_channel": "H",
-            "requantify": False,
+            "requantify": 0,
 
             "start_precursor_per_protein": 2,
             "pulse_precursor_per_protein": 2,

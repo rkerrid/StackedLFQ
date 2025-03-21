@@ -91,7 +91,7 @@ class PageOne(tk.Frame):
         
         # Requantify checkbox
         tk.Label(self, text="Requantify:").grid(row=9, column=0, padx=10, pady=5, sticky="w")
-        self.checkbox_requantify_var = tk.BooleanVar()
+        self.checkbox_requantify_var = tk.IntVar()
         checkbox_requantify = ttk.Checkbutton(self, variable=self.checkbox_requantify_var).grid(row=9, column=1, sticky="w")
 
         # Selection Label
