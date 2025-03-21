@@ -7,11 +7,12 @@ import pandas as pd
 from stackedLFQ.gui.page_one import PageOne
 from stackedLFQ.gui.page_two import PageTwo
 
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("stacked LFQ")
-        self.geometry("800x700")
+        self.geometry("900x750")
   
         try:
             from PIL import Image, ImageTk
@@ -57,6 +58,7 @@ class App(tk.Tk):
             "diann_version": "1.8.1",
             "silac_starting_channel": "L",
             "silac_pulse_channel": "H",
+            "requantify": False,
 
             "start_precursor_per_protein": 2,
             "pulse_precursor_per_protein": 2,

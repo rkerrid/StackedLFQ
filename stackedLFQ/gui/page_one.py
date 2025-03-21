@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import pandas as pd
 import os
-import dask.dataframe as dd
+import dask.dataframe as dd        
 import time
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
@@ -41,7 +41,7 @@ class PageOne(tk.Frame):
         
         # Text Label Count Unique Runs
         self.label_unique_runs = tk.Label(self, text="Please Load Your File")
-        self.label_unique_runs.grid(row=11, column=1)
+        self.label_unique_runs.grid(row=12, column=1)
         
         # Pattern Input Files
         remove_pattern_start_label = tk.Label(self, text="Pattern to Remove (Start):").grid(row=2, column=0, padx=10, pady=5, sticky="w")
@@ -89,19 +89,24 @@ class PageOne(tk.Frame):
         silac_pulse_channel_dropdown.grid(row=8, column=1, padx=5, pady=5, sticky="ew")
         silac_pulse_channel_dropdown.bind("<<ComboboxSelected>>", self.update_selection_label)
         
+        # Requantify checkbox
+        tk.Label(self, text="Requantify:").grid(row=9, column=0, padx=10, pady=5, sticky="w")
+        self.checkbox_requantify_var = tk.BooleanVar()
+        checkbox_requantify = ttk.Checkbutton(self, variable=self.checkbox_requantify_var).grid(row=9, column=1, sticky="w")
+
         # Selection Label
         self.selection_label = tk.Label(self, text="MassSpec: Astral | Selected DIANN: 1.8.1 | Starting Channel: L | Pulse Channel: H")
-        self.selection_label.grid(row=9, column=1, pady=5, sticky="ew")
-        
+        self.selection_label.grid(row=10, column=1, pady=5, sticky="ew")
+
         # Preview Button
         preview_button = tk.Button(self, text="Preview Changes", command=self.preview_changes) 
-        preview_button.grid(row=10, column=1, pady=10)
+        preview_button.grid(row=11, column=1, pady=10)
         
         # Output Loacation
-        tk.Label(self, text="Output Location:").grid(row=12, column=0, padx=10, pady=5, sticky="w")
+        tk.Label(self, text="Output Location:").grid(row=13, column=0, padx=10, pady=5, sticky="w")
         self.output_location_entry = tk.Entry(self, width=50)
-        self.output_location_entry.grid(row=12, column=1, columnspan=2, pady=5, sticky="ew")
-        tk.Button(self, text="Browse", command=self.browse_folder).grid(row=12, column=3, padx=5, pady=5)
+        self.output_location_entry.grid(row=13, column=1, columnspan=2, pady=5, sticky="ew")
+        tk.Button(self, text="Browse", command=self.browse_folder).grid(row=13, column=3, padx=5, pady=5)
         
     def browse_file(self):
         file_path = filedialog.askopenfilename(
@@ -382,6 +387,7 @@ class PageOne(tk.Frame):
         self.controller.config_data["removing_pattern_start"] = self.remove_pattern_start_var.get().strip()
         self.controller.config_data["removing_pattern_end"] = self.remove_pattern_end_var.get().strip()
         self.controller.config_data["contaminant_pattern"] = self.contaminant_pattern_var.get().strip()
+        self.controller.config_data["requantify"] = self.checkbox_requantify_var.get()
         #print(self.controller.config_data) # FOR DEBUGGING - CAN BE REMOVED
         
     def update_pattern_end(self, *args):
