@@ -253,7 +253,6 @@ class Preprocessor:
         # what cols to keep for future workflow
         cols = ['Run',
                 'Protein.Group',
-                'Genes',
                 'Precursor.Id',
                 'Precursor.Quantity',
                 'Label',
