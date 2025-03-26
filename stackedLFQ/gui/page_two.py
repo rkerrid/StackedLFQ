@@ -73,10 +73,7 @@ class PageTwo(tk.Frame):
         self.dlfq_ions_entry.grid(row=9, column=1, padx=5, pady=5, sticky="w")
         self.dlfq_num_cores_entry.grid(row=10, column=1, padx=5, pady=5, sticky="w")
         
-        
-        
-        
-        
+ 
         
     def validate_decimal(self, value):
         """Allow only numbers and at most one decimal point."""

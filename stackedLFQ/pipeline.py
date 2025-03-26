@@ -41,7 +41,7 @@ class Pipeline:
     def _load_params(self, path):
         # json_path = os.path.join(os.path.dirname(__file__), 'configs', 'params.json')
         json_path = f'{path}/params.json'
-        print(json_path)
+        # print(json_path)
         with open(json_path, 'r') as file:
             params = json.load(file)
             
@@ -58,7 +58,7 @@ class Pipeline:
                         print(f"{new_path}: {type(item)}")
                         print_types(item, new_path)
             
-            print_types(params, f'{path}')
+            # print_types(params, f'{path}')
             return params
 
     def _confirm_metadata(self):
@@ -124,11 +124,25 @@ class Pipeline:
         df_p = _format_data(protein_groups, 'pulse')
         df_p.to_csv(os.path.join(self.path, 'protein_groups', 'pulse.csv'), sep=',')
         
+        # funtion to handle total intensity ensuring dropping of invlaid_vals
+        protein_groups_valid = protein_groups[protein_groups['conversion']!='invalid']
+        protein_groups_valid = protein_groups_valid[['Run','protein_group', 'normalized_intensity', 'genes']]
+        protein_groups_valid = protein_groups_valid.dropna()
+        df_total = protein_groups_valid.pivot_table(
+        index=['protein_group', 'genes'], 
+        columns ='Run',                                
+        values = 'normalized_intensity'                          
+        ).reset_index()
+        
+        df_total.to_csv(os.path.join(self.path, 'protein_groups', 'total.csv'), sep=',')
+        
         # drop non-float (ie invalid, L, and pulse labels) values from ratios col before formatting
         protein_groups = protein_groups[pd.to_numeric(protein_groups['pulse_L_ratio'], errors='coerce').notna()]
         
         df_r = _format_data(protein_groups, 'pulse_L_ratio')
         df_r.to_csv(os.path.join(self.path, 'protein_groups', 'ratios.csv'), sep=',')
+        
+        
         
     def _generate_reports(self):
         '''this function should call functions from the report module to plot data ralated to IDs, ratios, correlation etc. as well as log data about the run and version etc.'''        
