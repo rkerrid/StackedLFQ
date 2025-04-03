@@ -62,7 +62,7 @@ class PageTwo(tk.Frame):
         tk.Label(self, text="directLFQ Ions per Protein:").grid(row=9, column=0, padx=10, pady=5)
         tk.Label(self, text="directLFQ Number Cores:").grid(row=10, column=0, padx=10, pady=5)
         
-        self.dlfq_ions_var = tk.StringVar(value=3)
+        self.dlfq_ions_var = tk.StringVar(value=2)
         self.dlfq_ions_var.trace_add("write", self.update_config)
         self.dlfq_num_cores_var = tk.StringVar(value=8)
         self.dlfq_num_cores_var.trace_add("write", self.update_config)

@@ -13,7 +13,7 @@ if __name__ == "__main__":
     import_file = 'G:/My Drive/Data/PhD results chapters/20250225 mariana organoids/400ng 2 precursor/report.tsv'
    
     
-    pipeline = pipeline( path=path, import_file=import_file, metadata_file='meta_with_treatments_24h.csv')
+    pipeline = pipeline( path=path, import_file=import_file, metadata_file='meta_with_treatments_exclusion.csv')
 
     
     # result = pipeline.make_metadata()  

@@ -91,9 +91,15 @@ class PageOne(tk.Frame):
         
         # Requantify checkbox
         tk.Label(self, text="Requantify:").grid(row=9, column=0, padx=10, pady=5, sticky="w")
+        # self.checkbox_requantify_var = tk.IntVar()
+        # checkbox_requantify = ttk.Checkbutton(self, variable=self.checkbox_requantify_var).grid(row=9, column=1, sticky="w") # testing whether bug in this code
+        
+        # testing these changes
         self.checkbox_requantify_var = tk.IntVar()
-        checkbox_requantify = ttk.Checkbutton(self, variable=self.checkbox_requantify_var).grid(row=9, column=1, sticky="w")
-
+        self.checkbox_requantify_var.trace_add("write", self.update_config)
+        checkbox_requantify = ttk.Checkbutton(self, variable=self.checkbox_requantify_var)
+        checkbox_requantify.grid(row=9, column=1, sticky="w")
+        
         # Selection Label
         self.selection_label = tk.Label(self, text="MassSpec: Astral | Selected DIANN: 1.8.1 | Starting Channel: L | Pulse Channel: H")
         self.selection_label.grid(row=10, column=1, pady=5, sticky="ew")
