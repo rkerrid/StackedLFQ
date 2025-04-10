@@ -91,10 +91,6 @@ class PageOne(tk.Frame):
         
         # Requantify checkbox
         tk.Label(self, text="Requantify:").grid(row=9, column=0, padx=10, pady=5, sticky="w")
-        # self.checkbox_requantify_var = tk.IntVar()
-        # checkbox_requantify = ttk.Checkbutton(self, variable=self.checkbox_requantify_var).grid(row=9, column=1, sticky="w") # testing whether bug in this code
-        
-        # testing these changes
         self.checkbox_requantify_var = tk.IntVar()
         self.checkbox_requantify_var.trace_add("write", self.update_config)
         checkbox_requantify = ttk.Checkbutton(self, variable=self.checkbox_requantify_var)
@@ -103,7 +99,9 @@ class PageOne(tk.Frame):
         # Selection Label
         self.selection_label = tk.Label(self, text="MassSpec: Astral | Selected DIANN: 1.8.1 | Starting Channel: L | Pulse Channel: H")
         self.selection_label.grid(row=10, column=1, pady=5, sticky="ew")
-
+        # Add trace_add for SILAC channel variables to update config
+        self.silac_starting_channel_var.trace_add("write", self.update_config)
+        self.silac_pulse_channel_var.trace_add("write", self.update_config)
         # Preview Button
         preview_button = tk.Button(self, text="Preview Changes", command=self.preview_changes) 
         preview_button.grid(row=11, column=1, pady=10)
@@ -259,6 +257,8 @@ class PageOne(tk.Frame):
         self.controller.config_data["removing_pattern_end"] = self.remove_pattern_end_var.get().strip()
         self.controller.config_data["contaminant_pattern"] = self.contaminant_pattern_var.get().strip()
         self.controller.config_data["requantify"] = self.checkbox_requantify_var.get()
+        self.controller.config_data['silac_light_channel'] = self.silac_starting_channel_var.get()
+        self.controller.config_data['silac_pulse_channel'] = self.silac_pulse_channel_var.get()
         #print(self.controller.config_data) # FOR DEBUGGING - CAN BE REMOVED
         
     def update_pattern_end(self, *args):

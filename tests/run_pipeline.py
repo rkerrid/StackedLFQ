@@ -9,11 +9,11 @@ if __name__ == "__main__":
      
 
 
-    path = 'G:/My Drive/Data/PhD results chapters/20250225 mariana organoids/400ng 2 precursor'
-    import_file = 'G:/My Drive/Data/PhD results chapters/20250225 mariana organoids/400ng 2 precursor/report.tsv'
+    path = 'G:/My Drive/Data/main experiments/20250408 poc from 2022'
+    import_file = 'G:/My Drive/Data/main experiments/20250408 poc from 2022/report.tsv'
    
     
-    pipeline = pipeline( path=path, import_file=import_file, metadata_file='meta_with_treatments_exclusion.csv')
+    pipeline = pipeline( path=path, import_file=import_file, metadata_file='meta.csv')
 
     
     # result = pipeline.make_metadata()  
