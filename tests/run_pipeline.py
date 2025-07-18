@@ -9,8 +9,8 @@ if __name__ == "__main__":
      
 
 
-    path = 'G:/My Drive/Data/main experiments/20250408 poc from 2022'
-    import_file = 'G:/My Drive/Data/main experiments/20250408 poc from 2022/report.tsv'
+    path = 'G:/My Drive/Data/data/20250505 daniela/1k2p5k'
+    import_file = 'G:/My Drive/Data/data/20250505 daniela/1k2p5k/report.tsv'
    
     
     pipeline = pipeline( path=path, import_file=import_file, metadata_file='meta.csv')
